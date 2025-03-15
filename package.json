@@ -1,0 +1,17 @@
+{
+  "name": "russian-bad-word-censor",
+  "version": "1.0.3",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "keywords": ["censor", "typescript", "npm", "russian bad words", "bad words", "russian bad words filter", "bad words filter", "russian bad words censor", "bad words censor"],
+  "author": "IvanMalkS Van1s1mys",
+  "license": "MIT",
+  "description": "script for russian bad words censor",
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}
