@@ -1,0 +1,17 @@
+# Исключить папку с тестами
+src/__tests__/
+tests/
+
+# Исключить конфигурации тестов
+jest.config.js
+.eslintrc
+.prettierrc
+
+# Исключить исходники TypeScript (если используется)
+src/
+
+# Исключить ненужные файлы
+.gitignore
+.npmignore
+.vscode/
+.github/

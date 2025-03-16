@@ -5,11 +5,15 @@
 **Russian-Bad-Word** — это библиотека для поиска и замены нецензурных слов в тексте. Она поддерживает обработку текста на русском и английском языках, учитывает замены символов (например, "з" на "3" или "a" на "@") и позволяет добавлять собственные шаблоны для поиска нецензурных слов.
 
 ## Установка
+
 Вы можете установить **Russian-Bad-Word** с помощью npm:
+
 ```bash
 npm i russian-bad-word-censor
 ```
+
 с помощью yarn:
+
 ```bash
 yarn add russian-bad-word-censor
 ```
@@ -17,62 +21,85 @@ yarn add russian-bad-word-censor
 ## Использование
 
 ### Основной пример
+
 Использование
 Основной пример
+
 ```typescript
 import { RuCensor } from 'russian-bad-word-censor';
 
 // Пример текста
-const text = "Этот текст содержит нецензурное слово: х*y!";
+const text = "Этот текст содержит нецензурное слово: х*y";
 
 // Проверка и замена нецензурных слов
-const result = RuCensor.parse(text, "[цензура]");
+const result = RuCensor.replace(text, "*");
+const isNeededToCheck = RuCensor.isContainsBadWords(text) // bool
 
 console.log(result);
-// Output: { isFindBadWords: true, text: "Этот текст содержит нецензурное слово: [цензура]!" }
+// Output: "Этот текст содержит нецензурное слово: ***"
+
+console.log(isNeededToCheck)
+// Output: true
 ```
+
 ## Добавление собственных шаблонов
 
 Вы можете добавлять собственные шаблоны для поиска нецензурных слов:
-```typescript
-RuCensor.addBadWordPattern('[с][о][с][а][л]');
 
-const text = "Он сосал леденец";
-const result = RuCensor.parse(text, "[цензура]");
+```typescript
+RuCensor.addBadWordPattern('[о][н]');
+
+const text = "Он шёл по дорожке";
+const result = RuCensor.replace(text, "*");
 
 console.log(result);
-// Output: { "isFindBadWords": true, "text": "Он [цензура] леденец" } 
+// Output: ** шёл по дорожке 
+```
 
+## Добавление слов, которые будут пропущены
+
+Вы можете добавить слова, которые не будут считаться нецензурными:
+```typescript
+RuCensor.addWordsToPass("заштрихуй");
+
+const text = "Это слово заштрихуй не будет заменено.";
+const result = RuCensor.replace(text, "[цензура]");
+
+console.log(result);
+// Output: "Это слово заштрихуй не будет заменено."
 ```
 
 ## API
-```typescript
-RuCensor.parse(text: string, replace: string | null): ParseOut
-```
-Проверяет текст на наличие нецензурных слов и возвращает результат.
 
-    text: Текст для проверки.
+API
+```RuCensor.replace(text: string, replace: string): string```
 
-    replace: Строка для замены нецензурных слов. Если null, возвращается фрагмент текста с найденным словом.
+Проверяет текст на наличие нецензурных слов и заменяет их на указанную строку.
 
-    Возвращает: Объект ParseOut с полями:
+- text: Текст для проверки.
 
-        isFindBadWords: boolean — найдены ли нецензурные слова.
+- replace: Строка для замены нецензурных слов.
 
-        text: string — обработанный текст или фрагмент.
-```typescript
-RuCensor.addBadWordPattern(pattern: string): void
-```
+- Возвращает: Обработанный текст.
+
+```RuCensor.isContainsBadWords(text: string): boolean```
+
+Проверяет текст на наличие нецензурных слов.
+
+- text: Текст для проверки.
+
+- Возвращает: true, если найдены нецензурные слова, иначе false.
+
+```RuCensor.addBadWordPattern(pattern: string): void```
+
 Добавляет новый паттерн для поиска нецензурных слов.
 
-    pattern: Регулярное выражение или строка для поиска.
+- pattern: Регулярное выражение или строка для поиска.
 
-RuCensor.processText(text: string): string
+```RuCensor.addWordsToPass(word: string): void```
 
-Обрабатывает текст: приводит к нижнему регистру, заменяет символы, удаляет повторы.
+Добавляет слово, которое будет пропущено при проверке.
 
-    text: Текст для обработки.
-
-    Возвращает: Обработанный текст.
+- word: Слово, которое не будет считаться нецензурны
 
 Идея алгоритма взята у https://github.com/rin-nas/php-censure.

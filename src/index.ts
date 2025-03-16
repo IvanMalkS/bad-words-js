@@ -1,8 +1,3 @@
-export interface ParseOut {
-    isFindBadWords: boolean;
-    text: string;
-}
-
 export class RuCensor {
     private static readonly CHAR_MAPPING: Record<string, string> = {
         'з': '[3зz]',
@@ -41,33 +36,58 @@ export class RuCensor {
     };
 
     private static badWordsPatterns: string[] = [];
+    private static wordsToPass: string[] = ['заштрихуй', 'смузихлёбы'];
 
     /**
      * Проверяет текст на наличие нецензурных слов и обрабатывает их.
      *
      * @param {string} text - Текст для проверки.
-     * @param {string} replace - Строка для замены нецензурных слов. Если null, возвращается фрагмент текста с найденным словом.
-     * @returns {ParseOut} - Результат проверки и обработки текста.
+     * @param {string} replace - Строка для замены нецензурных слов.
+     * @returns {string} - Результат проверки и обработки текста.
      */
-    static parse(text: string, replace: string): ParseOut {
-        if (!text) {
-            return { isFindBadWords: false, text };
+    public static replace(text: string, replace: string): string {
+        const words = text.split(/(\s+)/);
+        const processedWords = words.map((word) => {
+            if (this.wordsToPass.includes(word.toLowerCase())) {
+                return word;
+            }
+
+            const processedText = this.processText(word);
+            const matches = this.findMatches(processedText);
+
+            if (!matches) {
+                return word;
+            }
+
+            return replace.repeat(word.length);
+        });
+
+        return processedWords.join('');
+    }
+
+    /**
+     * Проверяет текст на наличие нецензурных слов.
+     *
+     * @param {string} text - Текст для проверки.
+     * @returns {boolean} - Результат проверки.
+     */
+    public static isContainsBadWords(text: string): boolean {
+        const words = text.split(/(\s+)/);
+
+        for (const word of words) {
+            if (this.wordsToPass.includes(word.toLowerCase())) {
+                continue;
+            }
+
+            const processedText = this.processText(word);
+            const matches = this.findMatches(processedText);
+
+            if (matches) {
+                return true;
+            }
         }
 
-        const processedText = this.processText(text);
-        const matches = this.findMatches(processedText);
-
-        if (!matches) {
-            return { isFindBadWords: false, text };
-        }
-
-        if (replace !== null) {
-            const replacedText = this.replaceMatches(text, matches, replace);
-            return { isFindBadWords: true, text: replacedText };
-        }
-
-        const fragment = this.getFragment(processedText, matches[0]);
-        return { isFindBadWords: true, text: fragment };
+        return false;
     }
 
     /**
@@ -102,36 +122,6 @@ export class RuCensor {
     }
 
     /**
-     * Заменяет совпадения в тексте на указанную строку.
-     *
-     * @param {string} text - Текст для замены.
-     * @param {string[]} matches - Массив найденных нецензурных слов.
-     * @param {string} replace - Строка для замены.
-     * @returns {string} - Текст с заменёнными совпадениями.
-     */
-    private static replaceMatches(text: string, matches: string[], replace: string): string {
-        let textToReplace = text;
-        const uniqueMatches = [...new Set(matches)];
-        uniqueMatches.forEach((match) => {
-            const regex = this.getOriginalRegex(match);
-            textToReplace = textToReplace.replace(regex, replace);
-        });
-        return textToReplace;
-    }
-
-    /**
-     * Возвращает фрагмент текста с нецензурным словом.
-     *
-     * @param {string} text - Текст для поиска.
-     * @param {string} match - Найденное нецензурное слово.
-     * @returns {string} - Фрагмент текста с найденным словом.
-     */
-    private static getFragment(text: string, match: string): string {
-        const index = text.indexOf(match);
-        return text.substring(index, index + match.length);
-    }
-
-    /**
      * Возвращает регулярное выражение для поиска всех вариантов совпадения.
      *
      * @param {string} match - Найденное нецензурное слово.
@@ -160,7 +150,7 @@ export class RuCensor {
             `(?:${pretext})[eеё][бb6]`,
             'ёб(?=[^а-яa-z]|$)',
             `(?:${pretext})?[бb6][лl][яя]`,
-            '[пp][иie][дdg][eеaаoо][рpr]',
+            '[пp][иie][дdg][еeёaаoо][рpr]',
             '[мm][уy][дdg][аa]',
             '[жz][оo][пp][аayуыiеeoо]',
             '[мm][аa][нnh][дdg][аayуыiеeoо]',
@@ -171,6 +161,40 @@ export class RuCensor {
             '(?<!р)[scс][yуu][4ч][кk]',
             `(?:${pretext})?[хxh][еe][рpr](?:[нnh](?:я|ya)|\\s)`,
             '[зz3][аa][лl][уy][пp][аa]',
+            '[аa][нnh][уy][сc]',
+            '[фf][аa][лl][лl][оo][сc]',
+            '[пp][еeё][нnh][иi][сc]',
+            '[бb6][зz3сc]?[дdg]?[уyu]?[нnhхx]', // Шаблон для "бздун" и однокоренных
+            '[бb6][зz3сc]?[дdg]?[юyu]?[хxh]',   // Шаблон для "бздюх" и однокоренных
+            '[бb6][лl][уyu][дdg][иi][лl][иi][щsсc][еe]', // Шаблон для "блудилище"
+            `(?:${pretext})?[жj][оo][пp]`, // Шаблон для корня "жоп"
+            `(?:${pretext})?[бb6][зz3сc][дdg]`, // Шаблон для корня "бзд"
+            `(?:${pretext})?[дdg][рpr][оoюyu][чc]`, // Шаблон для корня "дроч" и "дрюч"
+            `(?:${pretext})?[зz3][аa][лl][уy][пp]`, // Шаблон для "залупа"
+            `(?:${pretext})?[сc][рr][аa][нnh][тt]`, // Шаблон для "срань"
+            `(?:${pretext})?[тt][рr][аa][хxh]`, // Шаблон для "трах"
+            `(?:${pretext})?[мm][аa][нnh][дdg]`, // Шаблон для "манда"
+            `(?:${pretext})?[кk][оo][нnh][чc]`, // Шаблон для "конч"
+            `(?:${pretext})?[мm][аa][сc][тt][уyu][рr]`, // Шаблон для "мастур"
+            `(?:${pretext})?[мm][иi][нnh][еe][тt]`, // Шаблон для "минет"
+            `(?:${pretext})?[дdg][рr][иi][сc][тt]`, // Шаблон для "дрист"
+            `(?:${pretext})?[дdg][рr][а][чc]`,
+            `(?:${pretext})?[дdg][рr][о][чc]`,
+            `(?:${pretext})?[сc][аa][сc]`, // Шаблон для "сас"
+            `(?:${pretext})?[сc][оo][сc]`, // Шаблон для "сос"
+            `(?:${pretext})?[пp][еe][дdg][еe][рr][аa][сc]`, // Шаблон для "педерас"
+            `(?:${pretext})?[пp][еe][дdg][иi][кk]`, // Шаблон для "педик"
+            `(?:${pretext})?[пp][иi][сc][ь]?[кk]`, // Шаблон для "писюк"
+            `(?:${pretext})?[пp][иi][сc][юyu][лl]`, // Шаблон для "писюл"
+            `(?:${pretext})?[пp][оo][пp][иi][зz3][жj][иi][вv][аa][тt]`, // Шаблон для "попизживать"
+            `(?:${pretext})?[яя][бb6][ыy][вv][аa]`, // Шаблон для "ябыва"
+            `(?:${pretext})?[пp][иi][зz3][жj][иi]`, // Шаблон для "пизжи"
+            `(?:${pretext})?[сc][уyu][чc][аa][рr]`, // Шаблон для "сучар"
+            `(?:${pretext})?[сc][уyu][чc][иi][йy]`, // Шаблон для "сучий"
+            `(?:${pretext})?[сc][уyu][чc][ь]`, // Шаблон для "суть"
+            `(?:${pretext})?[уyu][бb6][лl][юyu][дdg]`, // Шаблон для "ублюд"
+            `(?:${pretext})?[фf][аa][лl][лl]?[оo][сc]`, // Шаблон для "фаллос"
+            '[хxh][уyu][лl][иiеeё]', // Шаблон для "хули"
             ...this.badWordsPatterns,
         ].join('|');
     }
@@ -179,13 +203,44 @@ export class RuCensor {
      * Добавляет новый паттерн в список нецензурных слов.
      *
      * @param {string} pattern - Паттерн для добавления.
-     * @throws {Error} - Если паттерн не передан.
+     * @throws {Error} - Если паттерн не передан или не может быть приведённым как regex.
      */
-    static addBadWordPattern(pattern: string): void {
+    public static addBadWordPattern(pattern: string): void {
         if (!pattern) {
             throw new Error('Pattern must be provided');
         }
+
+        try {
+            new RegExp(pattern);
+        } catch (e) {
+            if (e instanceof SyntaxError) {
+                throw new Error('Invalid regular expression pattern');
+            } else {
+                throw e; 
+            }
+        }
+
         this.badWordsPatterns.push(pattern);
+    }
+
+    /**
+     * Добавляет слова, которые будут обязательно пропущены.
+     *
+     * @param {string} word - Слово для добавления.
+     * @throws {Error} - Если слово не передано.
+     */
+    public static addWordsToPass(word: string): void {
+        if (!word) {
+            throw new Error('Provide word to pass');
+        }
+
+        const lowerWord = word.toLowerCase();
+
+        if (lowerWord !== word) {
+            console.info(`Word to pass: ${word} will be cast to lower case`);
+        }
+
+        this.wordsToPass.push(lowerWord);
     }
 
     /**
@@ -232,6 +287,7 @@ export class RuCensor {
             '[мm]?[оo]?[зz3]?[гg]?[оoаa]',
             '[дdg]?[оo]?[лl]?[бb6]?[оoаa]',
             '[оo]?[сc]?[тt]?[рpr]?[оo]',
+            ''
         ].join('|');
     }
 
