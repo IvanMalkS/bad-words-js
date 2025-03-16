@@ -60,13 +60,23 @@ console.log(result);
 
 Вы можете добавить слова, которые не будут считаться нецензурными:
 ```typescript
-RuCensor.addWordsToPass("заштрихуй");
+RuCensor.addPassPatterns(/заштрихуй/gi)
 
 const text = "Это слово заштрихуй не будет заменено.";
-const result = RuCensor.replace(text, "[цензура]");
+const result = RuCensor.replace(text, "*");
 
 console.log(result);
 // Output: "Это слово заштрихуй не будет заменено."
+```
+
+## Очистка списков паттернов
+
+```typescript
+// Очистка списка нецензурных слов
+RuCensor.clearBadWordPattern();
+
+// Очистка списка слов для пропуска
+RuCensor.clearPassPatterns();
 ```
 
 ## API
@@ -101,5 +111,16 @@ API
 Добавляет слово, которое будет пропущено при проверке.
 
 - word: Слово, которое не будет считаться нецензурны
+
+```RuCensor.clearBadWordPattern(): void```
+Очищает список паттернов для строгой проверки нецензурных слов и слов добавленных вами.
+
+```RuCensor.clearPassPatterns(): void```
+Очищает список паттернов для слов, которые нужно пропустить.
+
+```RuCensor.getPretextPatterns(): string```
+Возвращает шаблон для приставок, используемых в нецензурных словах.
+
+- Возвращает: Шаблон регулярного выражения, полезно для добавления новых слов
 
 Идея алгоритма взята у https://github.com/rin-nas/php-censure.
