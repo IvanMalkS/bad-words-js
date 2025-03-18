@@ -1,5 +1,19 @@
+/* 
+*   Если ваше слово было заблокировано данной библиотекой 
+*   автор Ivan Malkov не имел цели вас оскорбить, 
+*   попросите автора ресурса добавить это слово в исключение.
+*   Распространяется по лицензии MIT.
+*/
+
 export class RuCensor {
-    private static readonly CHAR_MAPPING: Record<string, string> = {
+    constructor(variant: 'strict' | 'normal' = 'normal') {
+        if (variant === 'strict') {
+            this.badWordsPatterns = this.strongBadWordsPatterns
+        }
+    }
+
+
+    private readonly CHAR_MAPPING: Record<string, string> = {
         'з': '[3зz]',
         'б': '[6бb]',
         'а': '[аa@]',
@@ -35,7 +49,9 @@ export class RuCensor {
         'я': '[яy]',
     };
 
-    private static badWordsPatterns: string[] = [
+    private badWordsPatterns: string[] = []
+
+    private strongBadWordsPatterns: string[] = [
         '[зz3][аa][лl][уy][пp][аa]',
         '[аa][нnh][уy][сc]',
         '[фf][аa][лl][лl][оo][сc]',
@@ -72,7 +88,7 @@ export class RuCensor {
         `(?:${this.getPretextPatterns()})?[фf][аa][лl][лl]?[оo][сc]`, // Шаблон для "фаллос"
         '[хxh][уyu][лl][иiеeё]', // Шаблон для "хули"
     ];
-    private static passPatterns: RegExp[] = [/заштрихуй/gi, /смузихлёбы/gi];
+    private passPatterns: RegExp[] = [/заштрихуй/gi, /смузихлёбы/gi];
 
     /**
      * Проверяет текст на наличие нецензурных слов и обрабатывает их.
@@ -81,7 +97,7 @@ export class RuCensor {
      * @param {string} replace - Строка для замены нецензурных слов.
      * @returns {string} - Результат проверки и обработки текста.
      */
-    public static replace(text: string, replace: string): string {    
+    public replace(text: string, replace: string): string {    
         const words = text.split(/(\s+)/);
     
         const processedWords = words.map((word) => {
@@ -108,7 +124,7 @@ export class RuCensor {
      * @param {string} text - Текст для проверки.
      * @returns {boolean} - Результат проверки.
      */
-    public static isContainsBadWords(text: string): boolean {
+    public isContainsBadWords(text: string): boolean {
         const words = text.split(/(\s+)/);
 
         for (const word of words) {
@@ -132,7 +148,7 @@ export class RuCensor {
      * @param {string} pattern - Паттерн для добавления.
      * @throws {Error} - Если паттерн не передан или не может быть приведённым как regex.
      */
-    public static addPassPatterns(pattern: RegExp): void {
+    public addPassPatterns(pattern: RegExp): void {
         if (!pattern) {
             throw new Error('Provide pattern to pass');
         }
@@ -156,7 +172,7 @@ export class RuCensor {
      * @param {string} pattern - Паттерн для добавления.
      * @throws {Error} - Если паттерн не передан или не может быть приведённым как regex.
      */
-    public static addBadWordPattern(pattern: string): void {
+    public addBadWordPattern(pattern: string): void {
         if (!pattern) {
             throw new Error('Pattern must be provided');
         }
@@ -177,14 +193,14 @@ export class RuCensor {
     /**
      * Очищает массив паттернов для плохих слов
      */
-    public static clearBadWordPattern():void {
+    public clearBadWordPattern():void {
         this.badWordsPatterns = []
     }
 
     /**
      * Очищает массив паттернов для пропуска
      */
-    public static clearPassPatterns():void {
+    public clearPassPatterns():void {
         this.passPatterns = []
     }
 
@@ -193,7 +209,7 @@ export class RuCensor {
      *
      * @returns {string} - Шаблон регулярного выражения.
      */
-    public static getPretextPatterns(): string {
+    public getPretextPatterns(): string {
         return [
             '[уyоoаa]?(?=[еёeхx])',
             '[вvbсc]?(?=[хпбмгжxpmgj])',
@@ -241,7 +257,7 @@ export class RuCensor {
      * @param {string} word - Слово для проверки.
      * @returns {boolean} - Результат проверки.
      */
-    private static shouldPass(word: string): boolean {
+    private shouldPass(word: string): boolean {
         return this.passPatterns.some((pattern) => pattern.test(word.toLowerCase()));
     }
 
@@ -251,7 +267,7 @@ export class RuCensor {
      * @param {string} text - Текст для обработки.
      * @returns {string} - Обработанный текст.
      */
-    private static processText(text: string): string {
+    private processText(text: string): string {
         let processedText = text.toLowerCase();
 
         Object.keys(this.CHAR_MAPPING).forEach((standardChar) => {
@@ -270,7 +286,7 @@ export class RuCensor {
      * @param {string} text - Текст для поиска совпадений.
      * @returns {string[] | null} - Массив совпадений или null, если совпадений нет.
      */
-    private static findMatches(text: string): string[] | null {
+    private findMatches(text: string): string[] | null {
         const badWordsPattern = this.getBadWordsPattern();
         const regex = new RegExp(badWordsPattern, 'giu');
         return text.match(regex);
@@ -282,7 +298,7 @@ export class RuCensor {
      * @param {string} match - Найденное нецензурное слово.
      * @returns {RegExp} - Регулярное выражение для поиска.
      */
-    private static getOriginalRegex(match: string): RegExp {
+    private getOriginalRegex(match: string): RegExp {
         let pattern = '';
         for (const c of match) {
             const charRegex = this.CHAR_MAPPING[c] || this.escapeRegExp(c);
@@ -296,7 +312,7 @@ export class RuCensor {
      *
      * @returns {string} - Шаблон регулярного выражения.
      */
-    private static getBadWordsPattern(): string {
+    private getBadWordsPattern(): string {
         const pretext = this.getPretextPatterns();
         return [
             `(?:${pretext})?[hхx][уyu][ийiеeёяюju]`,
@@ -310,7 +326,6 @@ export class RuCensor {
             '[жz][оo][пp][аayуыiеeoо]',
             '[мm][аa][нnh][дdg][аayуыiеeoо]',
             '[гg][оo][вvb][нnh][оoаaяеeyу]',
-            'f[uу][cс]k',
             'л[оo][хx]',
             '(?<!р)[scс][yуu][kк][aаiи]',
             '(?<!р)[scс][yуu][4ч][кk]',
@@ -325,7 +340,7 @@ export class RuCensor {
      * @param {string} str - Строка для экранирования.
      * @returns {string} - Экранированная строка.
      */
-    private static escapeRegExp(str: string): string {
+    private escapeRegExp(str: string): string {
         return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 }
