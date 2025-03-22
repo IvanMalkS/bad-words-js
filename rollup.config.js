@@ -7,7 +7,7 @@ export default {
     output: [
         { dir: "dist/cjs", format: "cjs" },
         { dir: "dist/min", format: "cjs", plugins:      [terser()] },
-        { dir: "dist/esm", format: "esm" },
+        { dir: "dist", format: "esm" },
     ],
     plugins: [
         typescript({ useTsconfigDeclarationDir: true, tsconfig: "tsconfig.json" }),
