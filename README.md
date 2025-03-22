@@ -26,7 +26,7 @@ yarn add russian-bad-word-censor
 Основной пример
 
 ```typescript
-import { RuCensor } from 'russian-bad-word-censor';
+import RuCensor from 'russian-bad-word-censor';
 
 const censor = new RuCensor('strict')
 

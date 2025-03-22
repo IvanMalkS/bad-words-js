@@ -5,7 +5,7 @@
 *   Распространяется по лицензии MIT.
 */
 
-export class RuCensor {
+export default class RuCensor {
     constructor(variant: 'strict' | 'normal' = 'normal') {
         if (variant === 'strict') {
             this.badWordsPatterns = this.strongBadWordsPatterns

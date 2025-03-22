@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { RuCensor } from '../';
+import RuCensor from '../';
 
 describe('RuCensor', () => {
     let badWords: string[];
